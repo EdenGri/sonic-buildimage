@@ -13,6 +13,5 @@
     "LOGGER_MANDATORY_LOGLEVEL": {
         "desc": "LOGGER_MANDATORY_LOGOUTPUT  no logoutput.",
 	    "eStrKey": "Mandatory"
-
     }
 }
