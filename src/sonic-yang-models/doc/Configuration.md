@@ -55,7 +55,7 @@ Table of Contents
          * [VLAN_MEMBER](#vlan_member)  
          * [VXLAN](#vxlan)   
          * [Virtual router](#virtual-router)  
-         * [Logger](#logger)
+         * [LOGGER](#logger)           
          * [WRED_PROFILE](#wred_profile)  
          * [PASSWORD_HARDENING](#password_hardening)  
          * [SYSTEM_DEFAULTS table](#systemdefaults-table)
