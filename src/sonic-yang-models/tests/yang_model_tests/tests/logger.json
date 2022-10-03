@@ -4,14 +4,15 @@
     },
     "LOGGER_WRONG_LOGLEVEL": {
         "desc": "LOGGER_WRONG_LOGLEVEL pattern failure.",
-        "eStr": "wrong"
+        "eStr": ["wrong", "LOGLEVEL"]
     },
     "LOGGER_WRONG_LOGOUTPUT": {
         "desc": "LOGGER_WRONG_LOGOUTPUT pattern failure.",
-        "eStr": "wrong"
+        "eStr": ["wrong", "LOGOUTPUT"]
     },
     "LOGGER_MANDATORY_LOGLEVEL": {
         "desc": "LOGGER_MANDATORY_LOGOUTPUT  no logoutput.",
+        "estr": ["LOGLEVEL"],
 	    "eStrKey": "Mandatory"
     }
 }

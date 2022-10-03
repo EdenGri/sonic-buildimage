@@ -67,11 +67,7 @@ module sonic-logger{
                     }
                     default SYSLOG;
                 }  
-            }
-            /* end of list LOGGER_LIST */
-        }
-        /* end of LOGGER container */
-    }
-    /* end of sonic-logger container */
-}
-/* end of sonic-logger module */
+            }/* end of list LOGGER_LIST */
+        }/* end of LOGGER container */
+    }/* end of sonic-logger container */
+}/* end of sonic-logger module */
