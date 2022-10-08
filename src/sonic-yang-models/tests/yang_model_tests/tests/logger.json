@@ -11,8 +11,8 @@
         "eStr": ["wrong", "LOGOUTPUT"]
     },
     "LOGGER_MANDATORY_LOGLEVEL": {
-        "desc": "LOGGER_MANDATORY_LOGOUTPUT  no logoutput.",
+        "desc": "LOGGER_MANDATORY_LOGOUTPUT no logoutput.",
         "estr": ["LOGLEVEL"],
-	    "eStrKey": "Mandatory"
+        "eStrKey": "Mandatory"
     }
 }
