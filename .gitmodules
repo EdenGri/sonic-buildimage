@@ -83,7 +83,7 @@
 	branch = master
 [submodule "src/sonic-mgmt-common"]
 	path = src/sonic-mgmt-common
-	url = https://github.com/sonic-net/sonic-mgmt-common.git
+	url = https://github.com/EdenGri/sonic-mgmt-common.git
 [submodule "src/wpasupplicant/sonic-wpa-supplicant"]
 	path = src/wpasupplicant/sonic-wpa-supplicant
 	url = https://github.com/sonic-net/sonic-wpa-supplicant.git
