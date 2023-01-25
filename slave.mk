@@ -1186,6 +1186,7 @@ $(DOCKER_LOAD_TARGETS) : $(TARGET_PATH)/%.gz-load : .platform docker-start $$(TA
 # targets for building installers with base image
 $(addprefix $(TARGET_PATH)/, $(SONIC_INSTALLERS)) : $(TARGET_PATH)/% : \
         .platform \
+        build_debian_base.sh \
         onie-image.conf \
         build_debian.sh \
         scripts/dbg_files.sh \
