@@ -1,0 +1,130 @@
+#!/bin/bash
+## This script is to automate installation of Nvidia Base-OS configuration
+## files and packages to debian file system.
+##
+## USAGE:
+##   ./base_os_debian_extension.sh FILESYSTEM_ROOT PLATFORM_DIR IMAGE_DISTRO
+## PARAMETERS:
+##   FILESYSTEM_ROOT
+##          Path to debian file system root directory
+
+FILESYSTEM_ROOT=$1
+[ -n "$FILESYSTEM_ROOT" ] || {
+    echo "Error: no or empty FILESYSTEM_ROOT argument"
+    exit 1
+}
+
+PLATFORM_DIR=$2
+[ -n "$PLATFORM_DIR" ] || {
+    echo "Error: no or empty PLATFORM_DIR argument"
+    exit 1
+}
+
+IMAGE_DISTRO=$3
+[ -n "$IMAGE_DISTRO" ] || {
+    echo "Error: no or empty IMAGE_DISTRO argument"
+    exit 1
+}
+
+## Enable debug output for script
+set -x -e
+
+CONFIGURED_ARCH=$([ -f .arch ] && cat .arch || echo amd64)
+
+. functions.sh
+BUILD_SCRIPTS_DIR=files/build_scripts
+BUILD_TEMPLATES=files/build_templates
+IMAGE_CONFIGS=files/image_config
+SCRIPTS_DIR=files/scripts
+DOCKER_SCRIPTS_DIR=files/docker
+
+DOCKER_CTL_DIR=/usr/lib/docker/
+DOCKER_CTL_SCRIPT="$DOCKER_CTL_DIR/docker.sh"
+
+# Define target fold macro
+FILESYSTEM_ROOT_USR="$FILESYSTEM_ROOT/usr"
+FILESYSTEM_ROOT_USR_LIB="$FILESYSTEM_ROOT/usr/lib/"
+FILESYSTEM_ROOT_USR_LIB_SYSTEMD_SYSTEM="$FILESYSTEM_ROOT_USR_LIB/systemd/system"
+FILESYSTEM_ROOT_USR_SHARE="$FILESYSTEM_ROOT_USR/share"
+FILESYSTEM_ROOT_USR_SHARE_SONIC="$FILESYSTEM_ROOT_USR_SHARE/sonic"
+FILESYSTEM_ROOT_USR_SHARE_SONIC_SCRIPTS="$FILESYSTEM_ROOT_USR_SHARE_SONIC/scripts"
+FILESYSTEM_ROOT_USR_SHARE_SONIC_TEMPLATES="$FILESYSTEM_ROOT_USR_SHARE_SONIC/templates"
+FILESYSTEM_ROOT_USR_SHARE_SONIC_FIRMWARE="$FILESYSTEM_ROOT_USR_SHARE_SONIC/firmware"
+FILESYSTEM_ROOT_ETC="$FILESYSTEM_ROOT/etc"
+FILESYSTEM_ROOT_ETC_SONIC="$FILESYSTEM_ROOT_ETC/sonic"
+
+GENERATED_SERVICE_FILE="$FILESYSTEM_ROOT/etc/sonic/generated_services.conf"
+
+clean_sys() {
+    sudo chroot $FILESYSTEM_ROOT umount /sys/fs/cgroup/*            \
+                                        /sys/fs/cgroup              \
+                                        /sys || true
+}
+trap_push clean_sys
+sudo LANG=C chroot $FILESYSTEM_ROOT mount sysfs /sys -t sysfs
+
+# Update apt's snapshot of its repos
+sudo LANG=C DEBIAN_FRONTEND=noninteractive chroot $FILESYSTEM_ROOT apt-get update
+
+# Apply environtment configuration files
+sudo cp $IMAGE_CONFIGS/environment/environment $FILESYSTEM_ROOT/etc/
+sudo cp $IMAGE_CONFIGS/environment/motd $FILESYSTEM_ROOT/etc/
+
+# Create all needed directories
+sudo mkdir -p $FILESYSTEM_ROOT/etc/sonic/
+sudo mkdir -p $FILESYSTEM_ROOT/etc/modprobe.d/
+sudo mkdir -p $FILESYSTEM_ROOT/var/cache/sonic/
+sudo mkdir -p $FILESYSTEM_ROOT_USR_SHARE_SONIC_TEMPLATES/
+sudo mkdir -p $FILESYSTEM_ROOT_USR_SHARE_SONIC_FIRMWARE/
+# This is needed for Stretch and might not be needed for Buster where Linux create this directory by default.
+# Keeping it generic. It should not harm anyways.
+sudo mkdir -p $FILESYSTEM_ROOT_USR_LIB_SYSTEMD_SYSTEM
+
+# Copy crontabs
+sudo cp -f $IMAGE_CONFIGS/cron.d/* $FILESYSTEM_ROOT/etc/cron.d/
+
+# Copy syslog override files
+sudo mkdir -p $FILESYSTEM_ROOT/etc/systemd/system/syslog.socket.d
+sudo cp $IMAGE_CONFIGS/syslog/override.conf $FILESYSTEM_ROOT/etc/systemd/system/syslog.socket.d/override.conf
+sudo cp $IMAGE_CONFIGS/syslog/host_umount.sh $FILESYSTEM_ROOT/usr/bin/
+
+# Copy logrotate.d configuration files
+sudo cp -f $IMAGE_CONFIGS/logrotate/logrotate.d/* $FILESYSTEM_ROOT/etc/logrotate.d/
+sudo cp $IMAGE_CONFIGS/logrotate/rsyslog.j2 $FILESYSTEM_ROOT_USR_SHARE_SONIC_TEMPLATES/
+sudo cp $IMAGE_CONFIGS/logrotate/logrotate-config.service $FILESYSTEM_ROOT_USR_LIB_SYSTEMD_SYSTEM
+sudo cp $IMAGE_CONFIGS/logrotate/logrotate-config.sh $FILESYSTEM_ROOT/usr/bin/
+sudo mkdir -p $FILESYSTEM_ROOT/etc/systemd/system/logrotate.timer.d
+sudo cp $IMAGE_CONFIGS/logrotate/timerOverride.conf $FILESYSTEM_ROOT/etc/systemd/system/logrotate.timer.d/
+echo "logrotate-config.service" | sudo tee -a $GENERATED_SERVICE_FILE
+
+# Copy systemd-journald configuration files
+sudo cp -f $IMAGE_CONFIGS/systemd/journald.conf $FILESYSTEM_ROOT/etc/systemd/
+
+# System'd network udev rules
+sudo cp $IMAGE_CONFIGS/systemd/network/* $FILESYSTEM_ROOT_ETC/systemd/network/
+
+# Copy sudoers configuration file
+sudo cp $IMAGE_CONFIGS/sudoers/sudoers $FILESYSTEM_ROOT/etc/
+sudo cp $IMAGE_CONFIGS/sudoers/sudoers.lecture $FILESYSTEM_ROOT/etc/
+
+## Install package without starting service
+## ref: https://wiki.debian.org/chroot
+sudo tee -a $FILESYSTEM_ROOT/usr/sbin/policy-rc.d > /dev/null <<EOF
+#!/bin/sh
+exit 101
+EOF
+sudo chmod a+x $FILESYSTEM_ROOT/usr/sbin/policy-rc.d
+
+{% if sonic_asic_platform == "mellanox" %}
+sudo mkdir -p $FILESYSTEM_ROOT/etc/mlnx/
+sudo cp $files_path/$MLNX_SPC_FW_FILE $FILESYSTEM_ROOT/etc/mlnx/fw-SPC.mfa
+sudo cp $files_path/$MLNX_SPC2_FW_FILE $FILESYSTEM_ROOT/etc/mlnx/fw-SPC2.mfa
+sudo cp $files_path/$MLNX_SPC3_FW_FILE $FILESYSTEM_ROOT/etc/mlnx/fw-SPC3.mfa
+sudo cp $files_path/$MLNX_SPC4_FW_FILE $FILESYSTEM_ROOT/etc/mlnx/fw-SPC4.mfa
+sudo cp $files_path/$ISSU_VERSION_FILE $FILESYSTEM_ROOT/etc/mlnx/issu-version
+sudo cp $files_path/$MLNX_FFB_SCRIPT $FILESYSTEM_ROOT/usr/bin/mlnx-ffb.sh
+sudo cp $files_path/$MLNX_ONIE_FW_UPDATE $FILESYSTEM_ROOT/usr/bin/$MLNX_ONIE_FW_UPDATE
+sudo cp $files_path/$MLNX_SSD_FW_UPDATE $FILESYSTEM_ROOT/usr/bin/$MLNX_SSD_FW_UPDATE
+sudo cp $files_path/$MLNX_INSTALL_PENDING_FW $FILESYSTEM_ROOT/usr/bin/$MLNX_INSTALL_PENDING_FW
+j2 platform/mellanox/mlnx-fw-upgrade.j2 | sudo tee $FILESYSTEM_ROOT/usr/bin/mlnx-fw-upgrade.sh
+sudo chmod 755 $FILESYSTEM_ROOT/usr/bin/mlnx-fw-upgrade.sh

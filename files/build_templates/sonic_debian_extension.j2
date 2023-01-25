@@ -75,23 +75,6 @@ else
     sudo chroot $FILESYSTEM_ROOT $DOCKER_CTL_SCRIPT start
 fi
 
-# Update apt's snapshot of its repos
-sudo LANG=C DEBIAN_FRONTEND=noninteractive chroot $FILESYSTEM_ROOT apt-get update
-
-# Apply environtment configuration files
-sudo cp $IMAGE_CONFIGS/environment/environment $FILESYSTEM_ROOT/etc/
-sudo cp $IMAGE_CONFIGS/environment/motd $FILESYSTEM_ROOT/etc/
-
-# Create all needed directories
-sudo mkdir -p $FILESYSTEM_ROOT/etc/sonic/
-sudo mkdir -p $FILESYSTEM_ROOT/etc/modprobe.d/
-sudo mkdir -p $FILESYSTEM_ROOT/var/cache/sonic/
-sudo mkdir -p $FILESYSTEM_ROOT_USR_SHARE_SONIC_TEMPLATES/
-sudo mkdir -p $FILESYSTEM_ROOT_USR_SHARE_SONIC_FIRMWARE/
-# This is needed for Stretch and might not be needed for Buster where Linux create this directory by default.
-# Keeping it generic. It should not harm anyways.
-sudo mkdir -p $FILESYSTEM_ROOT_USR_LIB_SYSTEMD_SYSTEM
-
 # Install a patched version of ifupdown2  (and its dependencies via 'apt-get -y install -f')
 sudo dpkg --root=$FILESYSTEM_ROOT -i $debs_path/ifupdown2_*.deb || \
     sudo LANG=C DEBIAN_FRONTEND=noninteractive chroot $FILESYSTEM_ROOT apt-get -y install -f
@@ -354,9 +337,6 @@ sudo dpkg --root=$FILESYSTEM_ROOT -i $debs_path/openssh-server_${OPENSSH_VERSION
 sudo dpkg --root=$FILESYSTEM_ROOT -i $debs_path/flashrom_*.deb
 {% endif %}
 
-# Copy crontabs
-sudo cp -f $IMAGE_CONFIGS/cron.d/* $FILESYSTEM_ROOT/etc/cron.d/
-
 # Copy NTP configuration files and templates
 sudo cp $IMAGE_CONFIGS/ntp/ntp-config.service $FILESYSTEM_ROOT_USR_LIB_SYSTEMD_SYSTEM
 echo "ntp-config.service" | sudo tee -a $GENERATED_SERVICE_FILE
@@ -384,26 +364,9 @@ sudo cp $IMAGE_CONFIGS/rsyslog/rsyslog-container.conf.j2 $FILESYSTEM_ROOT_USR_SH
 sudo cp $IMAGE_CONFIGS/rsyslog/rsyslog.d/* $FILESYSTEM_ROOT/etc/rsyslog.d/
 echo "rsyslog-config.service" | sudo tee -a $GENERATED_SERVICE_FILE
 
-# Copy syslog override files
-sudo mkdir -p $FILESYSTEM_ROOT/etc/systemd/system/syslog.socket.d
-sudo cp $IMAGE_CONFIGS/syslog/override.conf $FILESYSTEM_ROOT/etc/systemd/system/syslog.socket.d/override.conf
-sudo cp $IMAGE_CONFIGS/syslog/host_umount.sh $FILESYSTEM_ROOT/usr/bin/
-
 # Copy system-health files
 sudo LANG=C cp $IMAGE_CONFIGS/system-health/system-health.service $FILESYSTEM_ROOT_USR_LIB_SYSTEMD_SYSTEM
 echo "system-health.service" | sudo tee -a $GENERATED_SERVICE_FILE
-
-# Copy logrotate.d configuration files
-sudo cp -f $IMAGE_CONFIGS/logrotate/logrotate.d/* $FILESYSTEM_ROOT/etc/logrotate.d/
-sudo cp $IMAGE_CONFIGS/logrotate/rsyslog.j2 $FILESYSTEM_ROOT_USR_SHARE_SONIC_TEMPLATES/
-sudo cp $IMAGE_CONFIGS/logrotate/logrotate-config.service $FILESYSTEM_ROOT_USR_LIB_SYSTEMD_SYSTEM
-sudo cp $IMAGE_CONFIGS/logrotate/logrotate-config.sh $FILESYSTEM_ROOT/usr/bin/
-sudo mkdir -p $FILESYSTEM_ROOT/etc/systemd/system/logrotate.timer.d
-sudo cp $IMAGE_CONFIGS/logrotate/timerOverride.conf $FILESYSTEM_ROOT/etc/systemd/system/logrotate.timer.d/
-echo "logrotate-config.service" | sudo tee -a $GENERATED_SERVICE_FILE
-
-# Copy systemd-journald configuration files
-sudo cp -f $IMAGE_CONFIGS/systemd/journald.conf $FILESYSTEM_ROOT/etc/systemd/
 
 # Copy interfaces configuration files and templates
 sudo cp $IMAGE_CONFIGS/interfaces/interfaces-config.service $FILESYSTEM_ROOT_USR_LIB_SYSTEMD_SYSTEM
@@ -426,9 +389,6 @@ sudo cp files/dhcp/90-dhcp6-systcl.conf.j2 $FILESYSTEM_ROOT_USR_SHARE_SONIC_TEMP
 # Copy initial interfaces configuration file, will be overwritten on first boot
 sudo cp $IMAGE_CONFIGS/interfaces/init_interfaces $FILESYSTEM_ROOT/etc/network/interfaces
 sudo mkdir -p $FILESYSTEM_ROOT/etc/network/interfaces.d
-
-# System'd network udev rules
-sudo cp $IMAGE_CONFIGS/systemd/network/* $FILESYSTEM_ROOT_ETC/systemd/network/
 
 # copy core file uploader files
 sudo cp $IMAGE_CONFIGS/corefile_uploader/core_uploader.service $FILESYSTEM_ROOT_USR_LIB_SYSTEMD_SYSTEM
@@ -606,22 +566,10 @@ sudo cp $IMAGE_CONFIGS/snmp/snmp.yml $FILESYSTEM_ROOT/etc/sonic/
 # Copy ASN configuration files
 sudo cp $IMAGE_CONFIGS/constants/constants.yml $FILESYSTEM_ROOT/etc/sonic/
 
-# Copy sudoers configuration file
-sudo cp $IMAGE_CONFIGS/sudoers/sudoers $FILESYSTEM_ROOT/etc/
-sudo cp $IMAGE_CONFIGS/sudoers/sudoers.lecture $FILESYSTEM_ROOT/etc/
-
 # Copy pcie-check service files
 sudo cp $IMAGE_CONFIGS/pcie-check/pcie-check.service $FILESYSTEM_ROOT_USR_LIB_SYSTEMD_SYSTEM
 echo "pcie-check.service" | sudo tee -a $GENERATED_SERVICE_FILE
 sudo cp $IMAGE_CONFIGS/pcie-check/pcie-check.sh $FILESYSTEM_ROOT/usr/bin/
-
-## Install package without starting service
-## ref: https://wiki.debian.org/chroot
-sudo tee -a $FILESYSTEM_ROOT/usr/sbin/policy-rc.d > /dev/null <<EOF
-#!/bin/sh
-exit 101
-EOF
-sudo chmod a+x $FILESYSTEM_ROOT/usr/sbin/policy-rc.d
 
 {% if installer_debs.strip() -%}
 {% for deb in installer_debs.strip().split(' ') -%}
@@ -921,20 +869,6 @@ sudo LANG=C DEBIAN_FRONTEND=noninteractive chroot $FILESYSTEM_ROOT apt-get autor
 sudo cp {{src}} $FILESYSTEM_ROOT/{{dst}}
 {% endif -%}
 {% endfor -%}
-
-{% if sonic_asic_platform == "mellanox" %}
-sudo mkdir -p $FILESYSTEM_ROOT/etc/mlnx/
-sudo cp $files_path/$MLNX_SPC_FW_FILE $FILESYSTEM_ROOT/etc/mlnx/fw-SPC.mfa
-sudo cp $files_path/$MLNX_SPC2_FW_FILE $FILESYSTEM_ROOT/etc/mlnx/fw-SPC2.mfa
-sudo cp $files_path/$MLNX_SPC3_FW_FILE $FILESYSTEM_ROOT/etc/mlnx/fw-SPC3.mfa
-sudo cp $files_path/$MLNX_SPC4_FW_FILE $FILESYSTEM_ROOT/etc/mlnx/fw-SPC4.mfa
-sudo cp $files_path/$ISSU_VERSION_FILE $FILESYSTEM_ROOT/etc/mlnx/issu-version
-sudo cp $files_path/$MLNX_FFB_SCRIPT $FILESYSTEM_ROOT/usr/bin/mlnx-ffb.sh
-sudo cp $files_path/$MLNX_ONIE_FW_UPDATE $FILESYSTEM_ROOT/usr/bin/$MLNX_ONIE_FW_UPDATE
-sudo cp $files_path/$MLNX_SSD_FW_UPDATE $FILESYSTEM_ROOT/usr/bin/$MLNX_SSD_FW_UPDATE
-sudo cp $files_path/$MLNX_INSTALL_PENDING_FW $FILESYSTEM_ROOT/usr/bin/$MLNX_INSTALL_PENDING_FW
-j2 platform/mellanox/mlnx-fw-upgrade.j2 | sudo tee $FILESYSTEM_ROOT/usr/bin/mlnx-fw-upgrade.sh
-sudo chmod 755 $FILESYSTEM_ROOT/usr/bin/mlnx-fw-upgrade.sh
 
 # Install mlnx-sonic-platform Python 3 package
 MLNX_SONIC_PLATFORM_PY3_WHEEL_NAME=$(basename {{mlnx_platform_api_py3_wheel_path}})
