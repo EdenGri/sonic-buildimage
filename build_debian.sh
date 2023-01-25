@@ -63,8 +63,9 @@ date
 sudo fuser -vm $FILESYSTEM_ROOT
 sudo rm -rf $FILESYSTEM_ROOT
 sudo unsquashfs -d $FILESYSTEM_ROOT sonic.squashfs
-pushd $FILESYSTEM_ROOT && sudo unzip $OLDPWD/$TARGET_PATH/basefs.zip; popd
+pushd $FILESYSTEM_ROOT && sudo unzip $OLDPWD/$TARGET_PATH/sonic-basefs.zip; popd
 date
+
 
 ## ensure proc is mounted
 sudo mount proc /proc -t proc || true
@@ -179,6 +180,8 @@ fi
 # Needed to install kdump-tools
 sudo LANG=C chroot $FILESYSTEM_ROOT /bin/bash -c "mkdir -p /etc/initramfs-tools/conf.d"
 sudo LANG=C chroot $FILESYSTEM_ROOT /bin/bash -c "echo 'MODULES=most' >> /etc/initramfs-tools/conf.d/driver-policy"
+
+
 
 ## Copy ASIC config checksum
 sudo chmod 755 files/build_scripts/generate_asic_config_checksum.py
