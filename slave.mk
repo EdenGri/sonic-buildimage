@@ -1184,9 +1184,252 @@ $(DOCKER_LOAD_TARGETS) : $(TARGET_PATH)/%.gz-load : .platform docker-start $$(TA
 ###############################################################################
 
 # targets for building installers with base image
+$(addprefix $(TARGET_PATH)/, $(SONIC_INSTALLERS_BASE)) : $(TARGET_PATH)/% : \
+		.platform \
+        build_debian_base.sh
+        $(HEADER)
+	# Pass initramfs and linux kernel explicitly. They are used for all platforms
+	export debs_path="$(IMAGE_DISTRO_DEBS_PATH)"
+	export files_path="$(FILES_PATH)"
+	export python_debs_path="$(PYTHON_DEBS_PATH)"
+	export initramfs_tools="$(IMAGE_DISTRO_DEBS_PATH)/$(INITRAMFS_TOOLS)"
+	export linux_kernel="$(IMAGE_DISTRO_DEBS_PATH)/$(LINUX_KERNEL)"
+	export onie_recovery_image="$(FILES_PATH)/$(ONIE_RECOVERY_IMAGE)"
+	export onie_recovery_kvm_4asic_image="$(FILES_PATH)/$(ONIE_RECOVERY_KVM_4ASIC_IMAGE)"
+	export onie_recovery_kvm_6asic_image="$(FILES_PATH)/$(ONIE_RECOVERY_KVM_4ASIC_IMAGE)"
+	export kversion="$(KVERSION)"
+	export image_type="$($*_IMAGE_TYPE)"
+	export sonicadmin_user="$(USERNAME)"
+	export sonic_asic_platform="$(patsubst %-$(CONFIGURED_ARCH),%,$(CONFIGURED_PLATFORM))"
+	export enable_organization_extensions="$(ENABLE_ORGANIZATION_EXTENSIONS)"
+	export enable_dhcp_graph_service="$(ENABLE_DHCP_GRAPH_SERVICE)"
+	export enable_ztp="$(ENABLE_ZTP)"
+	export include_teamd="$(INCLUDE_TEAMD)"
+	export include_router_advertiser="$(INCLUDE_ROUTER_ADVERTISER)"
+	export include_system_telemetry="$(INCLUDE_SYSTEM_TELEMETRY)"
+	export include_restapi="$(INCLUDE_RESTAPI)"
+	export include_nat="$(INCLUDE_NAT)"
+	export include_p4rt="$(INCLUDE_P4RT)"
+	export include_sflow="$(INCLUDE_SFLOW)"
+	export enable_auto_tech_support="$(ENABLE_AUTO_TECH_SUPPORT)"
+	export enable_asan="$(ENABLE_ASAN)"
+	export include_macsec="$(INCLUDE_MACSEC)"
+	export include_mgmt_framework="$(INCLUDE_MGMT_FRAMEWORK)"
+	export include_iccpd="$(INCLUDE_ICCPD)"
+	export pddf_support="$(PDDF_SUPPORT)"
+	export include_pde="$(INCLUDE_PDE)"
+	export shutdown_bgp_on_start="$(SHUTDOWN_BGP_ON_START)"
+	export default_buffer_model="$(SONIC_BUFFER_MODEL)"
+	export include_kubernetes="$(INCLUDE_KUBERNETES)"
+	export include_kubernetes_master="$(INCLUDE_KUBERNETES_MASTER)"
+	export kube_docker_proxy="$(KUBE_DOCKER_PROXY)"
+	export enable_pfcwd_on_start="$(ENABLE_PFCWD_ON_START)"
+	export installer_debs="$(addprefix $(IMAGE_DISTRO_DEBS_PATH)/,$($*_INSTALLS) $(FIPS_BASEIMAGE_INSTALLERS))"
+	export lazy_installer_debs="$(foreach deb, $($*_LAZY_INSTALLS),$(foreach device, $($(deb)_PLATFORM),$(addprefix $(device)@, $(IMAGE_DISTRO_DEBS_PATH)/$(deb))))"
+	export lazy_build_installer_debs="$(foreach deb, $($*_LAZY_BUILD_INSTALLS), $(addprefix $($(deb)_MACHINE)|,$(deb)))"
+	export installer_images="$(foreach docker, $($*_DOCKERS),\
+				$(addprefix $($(docker:-dbg.gz=.gz)_PACKAGE_NAME)|,\
+				$(addprefix $($(docker:-dbg.gz=.gz)_PATH)|,\
+				$(addprefix $($(docker:-dbg.gz=.gz)_MACHINE)|,\
+				$(addprefix $(TARGET_PATH)/,$(addsuffix :$($(docker:-dbg.gz=.gz)_VERSION),$(docker)))))))"
+	export sonic_packages="$(foreach package, $(SONIC_PACKAGES),\
+				$(addsuffix |$($(package)_DEFAULT_FEATURE_STATE_ENABLED),\
+				$(addsuffix |$($(package)_DEFAULT_FEATURE_OWNER),\
+				$(addsuffix |$($(package)_VERSION),\
+				$(addsuffix |$($(package)_REPOSITORY), $(package))))))"
+	export sonic_local_packages="$(foreach package, $(SONIC_PACKAGES_LOCAL),\
+				$(addsuffix |$($(package)_DEFAULT_FEATURE_STATE_ENABLED),\
+				$(addsuffix |$($(package)_DEFAULT_FEATURE_OWNER),\
+				$(addsuffix |$(addprefix $(TARGET_PATH)/, $(package)), $(package)))))"
+	export sonic_py_common_py2_wheel_path="$(addprefix $(PYTHON_WHEELS_PATH)/,$(SONIC_PY_COMMON_PY2))"
+	export sonic_py_common_py3_wheel_path="$(addprefix $(PYTHON_WHEELS_PATH)/,$(SONIC_PY_COMMON_PY3))"
+	export config_engine_py2_wheel_path="$(addprefix $(PYTHON_WHEELS_PATH)/,$(SONIC_CONFIG_ENGINE_PY2))"
+	export config_engine_py3_wheel_path="$(addprefix $(PYTHON_WHEELS_PATH)/,$(SONIC_CONFIG_ENGINE_PY3))"
+	export platform_common_py3_wheel_path="$(addprefix $(PYTHON_WHEELS_PATH)/,$(SONIC_PLATFORM_COMMON_PY3))"
+	export redis_dump_load_py2_wheel_path="$(addprefix $(PYTHON_WHEELS_PATH)/,$(REDIS_DUMP_LOAD_PY2))"
+	export redis_dump_load_py3_wheel_path="$(addprefix $(PYTHON_WHEELS_PATH)/,$(REDIS_DUMP_LOAD_PY3))"
+	export install_debug_image="$(INSTALL_DEBUG_TOOLS)"
+	export sonic_yang_models_py3_wheel_path="$(addprefix $(PYTHON_WHEELS_PATH)/,$(SONIC_YANG_MODELS_PY3))"
+	export sonic_ctrmgmt_py3_wheel_path="$(addprefix $(PYTHON_WHEELS_PATH)/,$(SONIC_CTRMGRD))"
+	export sonic_yang_mgmt_py3_wheel_path="$(addprefix $(PYTHON_WHEELS_PATH)/,$(SONIC_YANG_MGMT_PY3))"
+	export multi_instance="false"
+	export python_swss_debs="$(addprefix $(IMAGE_DISTRO_DEBS_PATH)/,$($(LIBSWSSCOMMON)_RDEPENDS))"
+	export python_swss_debs+=" $(addprefix $(IMAGE_DISTRO_DEBS_PATH)/,$(LIBSWSSCOMMON)) $(addprefix $(IMAGE_DISTRO_DEBS_PATH)/,$(PYTHON_SWSSCOMMON)) $(addprefix $(IMAGE_DISTRO_DEBS_PATH)/,$(PYTHON3_SWSSCOMMON))"
+	export sonic_utilities_py3_wheel_path="$(addprefix $(PYTHON_WHEELS_PATH)/,$(SONIC_UTILITIES_PY3))"
+	export sonic_host_services_py3_wheel_path="$(addprefix $(PYTHON_WHEELS_PATH)/,$(SONIC_HOST_SERVICES_PY3))"
+	export components="$(foreach component,$(notdir $^),\
+		$(shell [[ ! -z '$($(component)_VERSION)' && ! -z '$($(component)_NAME)' ]] && \
+			echo $($(component)_NAME)==$($(component)_VERSION)))"
+	export include_mux="$(INCLUDE_MUX)"
+	export include_bootchart="$(INCLUDE_BOOTCHART)"
+	export enable_bootchart="$(ENABLE_BOOTCHART)"
+	$(foreach docker, $($*_DOCKERS),\
+		export docker_image="$(docker)"
+		export docker_image_name="$(basename $(docker))"
+		export docker_container_name="$($(docker:-dbg.gz=.gz)_CONTAINER_NAME)"
+		export mount_default_tmpfs="y"
+		$(eval $(docker:-dbg.gz=.gz)_RUN_OPT += $($(docker:-dbg.gz=.gz)_$($*_IMAGE_TYPE)_RUN_OPT))
+		export docker_image_run_opt="$($(docker:-dbg.gz=.gz)_RUN_OPT)"
+
+		if [ -f files/build_templates/$($(docker:-dbg.gz=.gz)_CONTAINER_NAME).service.j2 ]; then
+			j2 files/build_templates/$($(docker:-dbg.gz=.gz)_CONTAINER_NAME).service.j2 > $($(docker:-dbg.gz=.gz)_CONTAINER_NAME).service
+
+			# Set the flag GLOBAL for all the global system-wide dockers.
+			$(if $(shell ls files/build_templates/$($(docker:-dbg.gz=.gz)_CONTAINER_NAME).service.j2 2>/dev/null),\
+				$(eval $(docker:-dbg.gz=.gz)_GLOBAL = yes)
+			)
+		fi
+		if [ -f files/build_templates/$($(docker:-dbg.gz=.gz)_CONTAINER_NAME).timer.j2 ]; then
+			j2 files/build_templates/$($(docker:-dbg.gz=.gz)_CONTAINER_NAME).timer.j2 > $($(docker:-dbg.gz=.gz)_CONTAINER_NAME).timer
+
+			# Set the flag GLOBAL_TIMER for all the global system-wide dockers timers.
+			$(if $(shell ls files/build_templates/$($(docker:-dbg.gz=.gz)_CONTAINER_NAME).timer.j2 2>/dev/null),\
+				$(eval $(docker:-dbg.gz=.gz)_GLOBAL_TIMER = yes)
+			)
+		fi
+		# Any service template, inside instance directory, will be used to generate .service and @.service file.
+		if [ -f files/build_templates/per_namespace/$($(docker:-dbg.gz=.gz)_CONTAINER_NAME).service.j2 ]; then
+			export multi_instance="true"
+			j2 files/build_templates/per_namespace/$($(docker:-dbg.gz=.gz)_CONTAINER_NAME).service.j2 > $($(docker:-dbg.gz=.gz)_CONTAINER_NAME)@.service
+			$(if $(shell ls files/build_templates/per_namespace/$($(docker:-dbg.gz=.gz)_CONTAINER_NAME).service.j2 2>/dev/null),\
+				$(eval $(docker:-dbg.gz=.gz)_TEMPLATE = yes)
+			)
+			export multi_instance="false"
+			j2 files/build_templates/per_namespace/$($(docker:-dbg.gz=.gz)_CONTAINER_NAME).service.j2 > $($(docker:-dbg.gz=.gz)_CONTAINER_NAME).service
+		fi
+		# Any timer template, inside instance directory, will be used to generate .timer and @.timer file.
+		if [ -f files/build_templates/per_namespace/$($(docker:-dbg.gz=.gz)_CONTAINER_NAME).timer.j2 ]; then
+			export multi_instance="true"
+			j2 files/build_templates/per_namespace/$($(docker:-dbg.gz=.gz)_CONTAINER_NAME).timer.j2 > $($(docker:-dbg.gz=.gz)_CONTAINER_NAME)@.timer
+			$(if $(shell ls files/build_templates/per_namespace/$($(docker:-dbg.gz=.gz)_CONTAINER_NAME).timer.j2 2>/dev/null),\
+				$(eval $(docker:-dbg.gz=.gz)_TEMPLATE_TIMER = yes)
+			)
+			export multi_instance="false"
+			j2 files/build_templates/per_namespace/$($(docker:-dbg.gz=.gz)_CONTAINER_NAME).timer.j2 > $($(docker:-dbg.gz=.gz)_CONTAINER_NAME).timer
+		fi
+		# Any service template, inside share_image directory, will be used to generate -chassis.service file.
+		# TODO: need better way to name the image-shared service
+		if [ -f files/build_templates/share_image/$($(docker:-dbg.gz=.gz)_CONTAINER_NAME).service.j2 ]; then
+			j2 files/build_templates/share_image/$($(docker:-dbg.gz=.gz)_CONTAINER_NAME).service.j2 > $($(docker:-dbg.gz=.gz)_CONTAINER_NAME)-chassis.service
+			$(if $(shell ls files/build_templates/share_image/$($(docker:-dbg.gz=.gz)_CONTAINER_NAME).service.j2 2>/dev/null),\
+				$(eval $(docker:-dbg.gz=.gz)_SHARE = yes)
+			)
+		fi
+
+		j2 files/build_templates/docker_image_ctl.j2 > $($(docker:-dbg.gz=.gz)_CONTAINER_NAME).sh
+		chmod +x $($(docker:-dbg.gz=.gz)_CONTAINER_NAME).sh
+
+		$(if $($(docker:-dbg.gz=.gz)_MACHINE),\
+			mv $($(docker:-dbg.gz=.gz)_CONTAINER_NAME).sh $($(docker:-dbg.gz=.gz)_MACHINE)_$($(docker:-dbg.gz=.gz)_CONTAINER_NAME).sh
+		)
+	)
+
+	# Exported variables are used by sonic_debian_extension.sh
+	export installer_start_scripts="$(foreach docker, $($*_DOCKERS),$(addsuffix .sh, $($(docker:-dbg.gz=.gz)_CONTAINER_NAME)))"
+	export feature_vs_image_names="$(foreach docker, $($*_DOCKERS), $(addsuffix :, $($(docker:-dbg.gz=.gz)_CONTAINER_NAME):$(docker:-dbg.gz=.gz)))"
+
+	# Marks template services with an "@" according to systemd convention
+	# If the $($docker)_TEMPLATE) variable is set, the service will be treated as a template
+	# If the $($docker)_GLOBAL) and $($docker)_TEMPLATE) variables are set the service will be added both as a global and template service.
+	$(foreach docker, $($*_DOCKERS),\
+		$(if $($(docker:-dbg.gz=.gz)_TEMPLATE),\
+			$(if $($(docker:-dbg.gz=.gz)_GLOBAL),\
+				$(eval SERVICES += "$(addsuffix .service, $($(docker:-dbg.gz=.gz)_CONTAINER_NAME))")\
+			)\
+			$(eval SERVICES += "$(addsuffix @.service, $($(docker:-dbg.gz=.gz)_CONTAINER_NAME))"),\
+			$(eval SERVICES += "$(addsuffix .service, $($(docker:-dbg.gz=.gz)_CONTAINER_NAME))")
+		)
+		$(if $($(docker:-dbg.gz=.gz)_SHARE),\
+			$(eval SERVICES += "$(addsuffix -chassis.service, $($(docker:-dbg.gz=.gz)_CONTAINER_NAME))")
+		)
+	)
+	# Marks template timers with an "@" according to systemd convention
+	# If the $($docker)_TEMPLATE_TIMER) variable is set, the timer will be treated as a template
+	# If the $($docker)_GLOBAL_TIMER) and $($docker)_TEMPLATE_TIMER) variables are set the timer will be added both as a global and template timer.
+	$(foreach docker, $($*_DOCKERS),\
+		$(if $($(docker:-dbg.gz=.gz)_TEMPLATE_TIMER),\
+			$(if $($(docker:-dbg.gz=.gz)_GLOBAL_TIMER),\
+				$(eval TIMERS += "$(addsuffix .timer, $($(docker:-dbg.gz=.gz)_CONTAINER_NAME))")\
+			)\
+			$(eval TIMERS += "$(addsuffix @.timer, $($(docker:-dbg.gz=.gz)_CONTAINER_NAME))"),\
+			$(eval TIMERS += "$(addsuffix .timer, $($(docker:-dbg.gz=.gz)_CONTAINER_NAME))")
+		)
+	)
+	export installer_services="$(SERVICES)"
+	export installer_timers="$(TIMERS)"
+
+	export installer_extra_files="$(foreach docker, $($*_DOCKERS), $(foreach file, $($(docker:-dbg.gz=.gz)_BASE_IMAGE_FILES), $($(docker:-dbg.gz=.gz)_PATH)/base_image_files/$(file)))"
+
+	j2 -f env files/initramfs-tools/union-mount.j2 onie-image.conf > files/initramfs-tools/union-mount
+	j2 -f env files/initramfs-tools/arista-convertfs.j2 onie-image.conf > files/initramfs-tools/arista-convertfs
+
+	$(if $($*_DOCKERS),
+		j2 files/build_templates/sonic_debian_extension.j2 > sonic_debian_extension.sh
+		chmod +x sonic_debian_extension.sh,
+	)
+
+	# Build images for the MACHINE, DEPENDENT_MACHINE defined.
+	$(foreach dep_machine, $($*_MACHINE) $($*_DEPENDENT_MACHINE), \
+		DEBUG_IMG="$(INSTALL_DEBUG_TOOLS)" \
+		DEBUG_SRC_ARCHIVE_DIRS="$(DBG_SRC_ARCHIVE)" \
+		DEBUG_SRC_ARCHIVE_FILE="$(DBG_SRC_ARCHIVE_FILE)" \
+			scripts/dbg_files.sh
+
+		DEBUG_IMG="$(INSTALL_DEBUG_TOOLS)" \
+		DEBUG_SRC_ARCHIVE_FILE="$(DBG_SRC_ARCHIVE_FILE)" \
+		USERNAME="$(USERNAME)" \
+		PASSWORD="$(PASSWORD)" \
+		TARGET_MACHINE=$(dep_machine) \
+		IMAGE_TYPE=$($*_IMAGE_TYPE) \
+		TARGET_PATH=$(TARGET_PATH) \
+		SONIC_ENFORCE_VERSIONS=$(SONIC_ENFORCE_VERSIONS) \
+		TRUSTED_GPG_URLS=$(TRUSTED_GPG_URLS) \
+		SONIC_ENABLE_SECUREBOOT_SIGNATURE="$(SONIC_ENABLE_SECUREBOOT_SIGNATURE)" \
+		SIGNING_KEY="$(SIGNING_KEY)" \
+		SIGNING_CERT="$(SIGNING_CERT)" \
+		PACKAGE_URL_PREFIX=$(PACKAGE_URL_PREFIX) \
+		DBGOPT='$(DBGOPT)' \
+		SONIC_VERSION_CACHE=$(SONIC_VERSION_CACHE) \
+		MULTIARCH_QEMU_ENVIRON=$(MULTIARCH_QEMU_ENVIRON) \
+		CROSS_BUILD_ENVIRON=$(CROSS_BUILD_ENVIRON) \
+		MASTER_KUBERNETES_VERSION=$(MASTER_KUBERNETES_VERSION) \
+		MASTER_KUBERNETES_CONTAINER_IMAGE_VERSION=$(MASTER_KUBERNETES_CONTAINER_IMAGE_VERSION) \
+		MASTER_PAUSE_VERSION=$(MASTER_PAUSE_VERSION) \
+		MASTER_COREDNS_VERSION=$(MASTER_COREDNS_VERSION) \
+		MASTER_ETCD_VERSION=$(MASTER_ETCD_VERSION) \
+		MASTER_CRI_DOCKERD=$(MASTER_CRI_DOCKERD) \
+			./build_debian_base.sh $(LOG)
+
+		USERNAME="$(USERNAME)" \
+		PASSWORD="$(PASSWORD)" \
+		TARGET_MACHINE=$(dep_machine) \
+		IMAGE_TYPE=$($*_IMAGE_TYPE) \
+		SONIC_ENABLE_IMAGE_SIGNATURE="$(SONIC_ENABLE_IMAGE_SIGNATURE)" \
+		SIGNING_KEY="$(SIGNING_KEY)" \
+		SIGNING_CERT="$(SIGNING_CERT)" \
+		CA_CERT="$(CA_CERT)" \
+		TARGET_PATH="$(TARGET_PATH)" \
+			./build_image.sh $(LOG)
+	)
+
+	$(foreach docker, $($*_DOCKERS), \
+		rm -f *$($(docker:-dbg.gz=.gz)_CONTAINER_NAME).sh
+		rm -f $($(docker:-dbg.gz=.gz)_CONTAINER_NAME).service
+		rm -f $($(docker:-dbg.gz=.gz)_CONTAINER_NAME)@.service
+	)
+
+	$(if $($*_DOCKERS),
+		rm sonic_debian_extension.sh,S
+	)
+
+	touch $@
+	$(FOOTER)
+
+SONIC_TARGET_LIST += $(addprefix $(TARGET_PATH)/, $(SONIC_INSTALLERS_BASE))
+
+# targets for building installers with base image
 $(addprefix $(TARGET_PATH)/, $(SONIC_INSTALLERS)) : $(TARGET_PATH)/% : \
         .platform \
-        build_debian_base.sh \
         onie-image.conf \
         build_debian.sh \
         scripts/dbg_files.sh \
@@ -1219,6 +1462,7 @@ $(addprefix $(TARGET_PATH)/, $(SONIC_INSTALLERS)) : $(TARGET_PATH)/% : \
         $$(addprefix $(TARGET_PATH)/,$$($$*_DOCKERS)) \
         $$(addprefix $(TARGET_PATH)/,$$(SONIC_PACKAGES_LOCAL)) \
         $$(addprefix $(FILES_PATH)/,$$($$*_FILES)) \
+        	$$(addprefix $(TARGET_PATH)/,$$(SONIC_INSTALLERS_BASE)) \
         $(addsuffix -install,$(addprefix $(IMAGE_DISTRO_DEBS_PATH)/,$(DEBOOTSTRAP))) \
         $(if $(findstring y,$(ENABLE_ZTP)),$(addprefix $(IMAGE_DISTRO_DEBS_PATH)/,$(SONIC_ZTP))) \
         $(if $(findstring y,$(ENABLE_FIPS_FEATURE)),$(addprefix $(IMAGE_DISTRO_DEBS_PATH)/,$(SYMCRYPT_OPENSSL))) \
