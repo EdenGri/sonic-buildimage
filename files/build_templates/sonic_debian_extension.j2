@@ -870,13 +870,6 @@ sudo cp {{src}} $FILESYSTEM_ROOT/{{dst}}
 {% endif -%}
 {% endfor -%}
 
-# Install mlnx-sonic-platform Python 3 package
-MLNX_SONIC_PLATFORM_PY3_WHEEL_NAME=$(basename {{mlnx_platform_api_py3_wheel_path}})
-sudo cp {{mlnx_platform_api_py3_wheel_path}} $FILESYSTEM_ROOT/$MLNX_SONIC_PLATFORM_PY3_WHEEL_NAME
-sudo https_proxy=$https_proxy LANG=C chroot $FILESYSTEM_ROOT pip3 install $MLNX_SONIC_PLATFORM_PY3_WHEEL_NAME
-sudo rm -rf $FILESYSTEM_ROOT/$MLNX_SONIC_PLATFORM_PY3_WHEEL_NAME
-{% endif %}
-
 {%- if SONIC_ROUTING_STACK == "frr" %}
 sudo mkdir $FILESYSTEM_ROOT/etc/sonic/frr
 sudo touch $FILESYSTEM_ROOT/etc/sonic/frr/frr.conf
