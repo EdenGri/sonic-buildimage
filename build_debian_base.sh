@@ -31,14 +31,16 @@ set -x -e
 CONFIGURED_ARCH=$([ -f .arch ] && cat .arch || echo amd64)
 
 ## docker engine version (with platform)
-DOCKER_VERSION=5:20.10.7~3-0~debian-$IMAGE_DISTRO
-LINUX_KERNEL_VERSION=5.10.0-8-2
+DOCKER_VERSION=5:20.10.14~3-0~debian-$IMAGE_DISTRO
+CONTAINERD_IO_VERSION=1.5.11-1
+LINUX_KERNEL_VERSION=5.10.0-18-2
 
 ## Working directory to prepare the file system
 FILESYSTEM_ROOT=./fsroot
 PLATFORM_DIR=platform
 ## Hostname for the linux image
 HOSTNAME=sonic
+DEFAULT_USERINFO="Default admin user,,,"
 BUILD_TOOL_PATH=src/sonic-build-hooks/buildinfo
 TRUSTED_GPG_DIR=$BUILD_TOOL_PATH/trusted.gpg.d
 
@@ -75,6 +77,9 @@ mkdir -p $FILESYSTEM_ROOT
 mkdir -p $FILESYSTEM_ROOT/$PLATFORM_DIR
 mkdir -p $FILESYSTEM_ROOT/$PLATFORM_DIR/x86_64-grub
 touch $FILESYSTEM_ROOT/$PLATFORM_DIR/firsttime
+
+## ensure proc is mounted
+sudo mount proc /proc -t proc || true
 
 ## make / as a mountpoint in chroot env, needed by dockerd
 pushd $FILESYSTEM_ROOT
