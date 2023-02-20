@@ -59,14 +59,12 @@ TRUSTED_GPG_DIR=$BUILD_TOOL_PATH/trusted.gpg.d
     exit 1
 }
 
-## Prepare the file system directory
-if [[ -d $FILESYSTEM_ROOT ]]; then
-    sudo rm -rf $FILESYSTEM_ROOT || die "Failed to clean chroot directory"
-fi
-mkdir -p $FILESYSTEM_ROOT
-mkdir -p $FILESYSTEM_ROOT/$PLATFORM_DIR
-mkdir -p $FILESYSTEM_ROOT/$PLATFORM_DIR/grub
-touch $FILESYSTEM_ROOT/$PLATFORM_DIR/firsttime
+date
+sudo fuser -vm $FILESYSTEM_ROOT
+sudo rm -rf $FILESYSTEM_ROOT
+sudo unsquashfs -d $FILESYSTEM_ROOT sonic.squashfs
+pushd $FILESYSTEM_ROOT && sudo unzip $OLDPWD/$TARGET_PATH/sonic-basefs.zip; popd
+date
 
 ## ensure proc is mounted
 sudo mount proc /proc -t proc || true
@@ -75,27 +73,6 @@ sudo mount proc /proc -t proc || true
 pushd $FILESYSTEM_ROOT
 sudo mount --bind . .
 popd
-
-## Build the host debian base system
-echo '[INFO] Build host debian base system...'
-TARGET_PATH=$TARGET_PATH scripts/build_debian_base_system.sh $CONFIGURED_ARCH $IMAGE_DISTRO $FILESYSTEM_ROOT
-
-# Prepare buildinfo
-sudo scripts/prepare_debian_image_buildinfo.sh $CONFIGURED_ARCH $IMAGE_DISTRO $FILESYSTEM_ROOT $http_proxy
-
-sudo chown root:root $FILESYSTEM_ROOT
-
-## Config hostname and hosts, otherwise 'sudo ...' will complain 'sudo: unable to resolve host ...'
-sudo LANG=C chroot $FILESYSTEM_ROOT /bin/bash -c "echo '$HOSTNAME' > /etc/hostname"
-sudo LANG=C chroot $FILESYSTEM_ROOT /bin/bash -c "echo '127.0.0.1       $HOSTNAME' >> /etc/hosts"
-sudo LANG=C chroot $FILESYSTEM_ROOT /bin/bash -c "echo '127.0.0.1       localhost' >> /etc/hosts"
-
-## Config basic fstab
-sudo LANG=C chroot $FILESYSTEM_ROOT /bin/bash -c 'echo "proc /proc proc defaults 0 0" >> /etc/fstab'
-sudo LANG=C chroot $FILESYSTEM_ROOT /bin/bash -c 'echo "sysfs /sys sysfs defaults 0 0" >> /etc/fstab'
-
-## Setup proxy
-[ -n "$http_proxy" ] && sudo /bin/bash -c "echo 'Acquire::http::Proxy \"$http_proxy\";' > $FILESYSTEM_ROOT/etc/apt/apt.conf.d/01proxy"
 
 trap_push 'sudo LANG=C chroot $FILESYSTEM_ROOT umount /proc || true'
 sudo LANG=C chroot $FILESYSTEM_ROOT mount proc /proc -t proc
