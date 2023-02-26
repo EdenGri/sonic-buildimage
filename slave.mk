@@ -1325,6 +1325,7 @@ $(addprefix $(TARGET_PATH)/, $(SONIC_INSTALLERS_BASE)) : $(TARGET_PATH)/% : \
 
 		j2 files/build_templates/docker_image_ctl.j2 > $($(docker:-dbg.gz=.gz)_CONTAINER_NAME).sh
 		chmod +x $($(docker:-dbg.gz=.gz)_CONTAINER_NAME).sh
+		$(info Eden - slave.mk: here13)
 
 		$(if $($(docker:-dbg.gz=.gz)_MACHINE),\
 			mv $($(docker:-dbg.gz=.gz)_CONTAINER_NAME).sh $($(docker:-dbg.gz=.gz)_MACHINE)_$($(docker:-dbg.gz=.gz)_CONTAINER_NAME).sh
@@ -1419,6 +1420,7 @@ $(addprefix $(TARGET_PATH)/, $(SONIC_INSTALLERS_BASE)) : $(TARGET_PATH)/% : \
 	)
 
 	touch $@
+	$(info Eden - slave.mk: here12)
 	$(FOOTER)
 
 SONIC_TARGET_LIST += $(addprefix $(TARGET_PATH)/, $(SONIC_INSTALLERS_BASE))
@@ -1458,7 +1460,7 @@ $(addprefix $(TARGET_PATH)/, $(SONIC_INSTALLERS)) : $(TARGET_PATH)/% : \
         $$(addprefix $(TARGET_PATH)/,$$($$*_DOCKERS)) \
         $$(addprefix $(TARGET_PATH)/,$$(SONIC_PACKAGES_LOCAL)) \
         $$(addprefix $(FILES_PATH)/,$$($$*_FILES)) \
-        	$$(addprefix $(TARGET_PATH)/,$$(SONIC_INSTALLERS_BASE)) \
+        $$(addprefix $(TARGET_PATH)/,$$(SONIC_INSTALLERS_BASE)) \
         $(addsuffix -install,$(addprefix $(IMAGE_DISTRO_DEBS_PATH)/,$(DEBOOTSTRAP))) \
         $(if $(findstring y,$(ENABLE_ZTP)),$(addprefix $(IMAGE_DISTRO_DEBS_PATH)/,$(SONIC_ZTP))) \
         $(if $(findstring y,$(ENABLE_FIPS_FEATURE)),$(addprefix $(IMAGE_DISTRO_DEBS_PATH)/,$(SYMCRYPT_OPENSSL))) \
