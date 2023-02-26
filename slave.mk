@@ -1192,9 +1192,9 @@ $(DOCKER_LOAD_TARGETS) : $(TARGET_PATH)/%.gz-load : .platform docker-start $$(TA
 $(info Eden - slave.mk: Installers)
 # targets for building installers with base image
 $(addprefix $(TARGET_PATH)/, $(SONIC_INSTALLERS_BASE)) : $(TARGET_PATH)/% : \
-		.platform \
-        build_debian_base.sh
-		$(HEADER)
+	.platform \
+	build_debian_base.sh
+	$(HEADER)
 	# Pass initramfs and linux kernel explicitly. They are used for all platforms
 	export debs_path="$(IMAGE_DISTRO_DEBS_PATH)"
 	export files_path="$(FILES_PATH)"

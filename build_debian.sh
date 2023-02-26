@@ -11,38 +11,38 @@
 ##          The password, expected by chpasswd command
 
 ## Default user
-echo '[INFO] Eden Default user'
+echo "Eden build_debian Default user"
 [ -n "$USERNAME" ] || {
     echo "Error: no or empty USERNAME"
     exit 1
 }
 
 ## Password for the default user
-echo '[INFO] Eden Password for the default user'
+echo "Eden build_debian Password for the default user"
 [ -n "$PASSWORD" ] || {
     echo "Error: no or empty PASSWORD"
     exit 1
 }
 
 ## Include common functions
-echo '[INFO] Eden Include common functions'
+echo "Eden build_debian Include common functions" 
 . functions.sh
 
 ## Enable debug output for script
-echo '[INFO] Eden Enable debug output for script'
+echo "Eden build_debian Enable debug output for script" 
 set -x -e
 
 CONFIGURED_ARCH=$([ -f .arch ] && cat .arch || echo amd64)
 
 ## docker engine version (with platform)
-echo '[INFO] Eden docker engine version (with platform)'
+echo "Eden build_debian docker engine version (with platform)"
 
 DOCKER_VERSION=5:20.10.14~3-0~debian-$IMAGE_DISTRO
 CONTAINERD_IO_VERSION=1.5.11-1
 LINUX_KERNEL_VERSION=5.10.0-18-2
 
 ## Working directory to prepare the file system
-echo '[INFO] Eden Working directory to prepare the file system'
+echo "Eden build_debian Working directory to prepare the file system"
 FILESYSTEM_ROOT=./fsroot
 PLATFORM_DIR=platform
 ## Hostname for the linux image
@@ -52,7 +52,7 @@ BUILD_TOOL_PATH=src/sonic-build-hooks/buildinfo
 TRUSTED_GPG_DIR=$BUILD_TOOL_PATH/trusted.gpg.d
 
 ## Read ONIE image related config file
-echo '[INFO] Eden Read ONIE image related config file'
+echo "Eden build_debian Read ONIE image related config file"
 . ./onie-image.conf
 [ -n "$ONIE_IMAGE_PART_SIZE" ] || {
     echo "Error: Invalid ONIE_IMAGE_PART_SIZE in onie image config file"
@@ -66,7 +66,7 @@ echo '[INFO] Eden Read ONIE image related config file'
     echo "Error: Invalid FILESYSTEM_SQUASHFS in onie image config file"
     exit 1
 }
-echo '[INFO] Eden 1'
+echo "Eden build_debian here11" 
 date
 sudo fuser -vm $FILESYSTEM_ROOT
 sudo rm -rf $FILESYSTEM_ROOT

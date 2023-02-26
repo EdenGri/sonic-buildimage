@@ -11,48 +11,48 @@
 ##          The password, expected by chpasswd command
 
 ## Default user
-echo '[INFO] Eden build_debian_base: Default user'
+echo "Eden build_debian_base Default user" 
 [ -n "$USERNAME" ] || {
     echo "Error: no or empty USERNAME"
     exit 1
 }
 
 ## Password for the default user
-echo '[INFO] Eden build_debian_base: Password for the default user'
+echo "Eden build_debian_base Password for the default user" 
 [ -n "$PASSWORD" ] || {
     echo "Error: no or empty PASSWORD"
     exit 1
 }
 
 ## Include common functions
-echo '[INFO] Eden build_debian_base: Include common functions'
+echo "Eden build_debian_base Include common functions"
 . functions.sh
 
 ## Enable debug output for script
-echo '[INFO] Eden build_debian_base: set -x -e'
+echo "Eden build_debian_base  set -x -e" 
 set -x -e
 
 CONFIGURED_ARCH=$([ -f .arch ] && cat .arch || echo amd64)
 
 ## docker engine version (with platform)
-echo '[INFO] Eden build_debian_base: docker engine version (with platform)'
+echo "Eden build_debian_base  docker engine version (with platform)" 
 DOCKER_VERSION=5:20.10.14~3-0~debian-$IMAGE_DISTRO
 CONTAINERD_IO_VERSION=1.5.11-1
 LINUX_KERNEL_VERSION=5.10.0-18-2
 
 ## Working directory to prepare the file system
-echo '[INFO] Eden build_debian_base: Working directory to prepare the file system'
+echo "Eden build_debian_base Working directory to prepare the file system" 
 FILESYSTEM_ROOT=./fsroot
 PLATFORM_DIR=platform
 ## Hostname for the linux image
-echo '[INFO] Eden build_debian_base: Hostname for the linux image'
+echo "Eden build_debian_base Hostname for the linux image" 
 HOSTNAME=sonic
 DEFAULT_USERINFO="Default admin user,,,"
 BUILD_TOOL_PATH=src/sonic-build-hooks/buildinfo
 TRUSTED_GPG_DIR=$BUILD_TOOL_PATH/trusted.gpg.d
 
 ## Read ONIE image related config file
-echo '[INFO] Eden build_debian_base: Read ONIE image related config file'
+echo "Eden build_debian_base Read ONIE image related config file" 
 . ./onie-image.conf
 [ -n "$ONIE_IMAGE_PART_SIZE" ] || {
     echo "Error: Invalid ONIE_IMAGE_PART_SIZE in onie image config file"
@@ -69,23 +69,13 @@ echo '[INFO] Eden build_debian_base: Read ONIE image related config file'
 
 
 ## Prepare the file system directory
-echo '[INFO] Eden build_debian_base: Prepare the file system directory'
+echo "Eden build_debian_base  Prepare the file system directory" 
 if [[ -d $FILESYSTEM_ROOT ]]; then
     sudo rm -rf $FILESYSTEM_ROOT || die "Failed to clean chroot directory"
 fi
 mkdir -p $FILESYSTEM_ROOT
 mkdir -p $FILESYSTEM_ROOT/$PLATFORM_DIR
 mkdir -p $FILESYSTEM_ROOT/$PLATFORM_DIR/grub
-touch $FILESYSTEM_ROOT/$PLATFORM_DIR/firsttime
-
-## Prepare the file system directory
-echo '[INFO] Eden build_debian_base: Prepare the file system directory'
-if [[ -d $FILESYSTEM_ROOT ]]; then
-    sudo rm -rf $FILESYSTEM_ROOT || die "Failed to clean chroot directory"
-fi
-mkdir -p $FILESYSTEM_ROOT
-mkdir -p $FILESYSTEM_ROOT/$PLATFORM_DIR
-mkdir -p $FILESYSTEM_ROOT/$PLATFORM_DIR/x86_64-grub
 touch $FILESYSTEM_ROOT/$PLATFORM_DIR/firsttime
 
 ## ensure proc is mounted
@@ -97,7 +87,7 @@ sudo mount --bind . .
 popd
 
 ## Build the host debian base system
-echo '[INFO] Build host debian base system...'
+echo "Eden build_debian_base Build host debian base system..."
 TARGET_PATH=$TARGET_PATH scripts/build_debian_base_system.sh $CONFIGURED_ARCH $IMAGE_DISTRO $FILESYSTEM_ROOT
 
 # Prepare buildinfo
@@ -569,7 +559,13 @@ fi
 sleep 10
 # pack base sys
 date
+echo "Eden build_debian_base date"
 sudo rm -f sonic.squashfs
+echo "Eden build_debian_base rm -f sonic.squashfs" 
 sudo mksquashfs $FILESYSTEM_ROOT sonic.squashfs -e boot -e var/lib/docker -e $PLATFORM_DIR
-pushd $FILESYSTEM_ROOT && zip $OLDPWD/$TARGET_PATH/basefs.zip -r boot/ $PLATFORM_DIR/; popd
+echo "Eden build_debian_base mksquashfs" 
+pushd $FILESYSTEM_ROOT && zip $OLDPWD/$TARGET_PATH/sonic-basefs.zip -r boot/ $PLATFORM_DIR/; popd
+echo "Eden build_debian_base FILESYSTEM_ROOT= $FILESYSTEM_ROOT OLDPWD = $OLDPWD TARGET_PATH= $TARGET_PATH PLATFORM_DIR = $PLATFORM_DIR"
+echo "Eden build_debian_base pushd"
 date
+echo "Eden build_debian_base date" 
