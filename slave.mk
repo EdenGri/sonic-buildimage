@@ -434,8 +434,9 @@ $(info SONiC Build System for $(CONFIGURED_PLATFORM):$(CONFIGURED_ARCH))
 endif
 
 # Overwrite the buildinfo in slave container
+$(info Eden - slave.mk: Overwrite the buildinfo in slave container)
 $(shell sudo scripts/prepare_slave_container_buildinfo.sh $(SLAVE_DIR) $(CONFIGURED_ARCH) $(BLDENV))
-
+$(info Eden - slave.mk: Makefile.cache)
 include Makefile.cache
 
 ifeq ($(SONIC_USE_DOCKER_BUILDKIT),y)
@@ -448,7 +449,7 @@ endif
 ## Generic rules section
 ## All rules must go after includes for propper targets expansion
 ###############################################################################
-
+$(info Eden - slave.mk: Generic rules section)
 export kernel_procure_method=$(KERNEL_PROCURE_METHOD)
 export vs_build_prepare_mem=$(VS_PREPARE_MEM)
 
@@ -465,6 +466,7 @@ export vs_build_prepare_mem=$(VS_PREPARE_MEM)
 # Get the docker tag. For packages it is an image version, for other dockers it stays latest.
 #
 # $(1) => Docker name
+$(info Eden - slave.mk: Canned sequences)
 
 define docker-get-tag
 $(shell [ ! -z $(filter $(1).gz,$(SONIC_PACKAGES_LOCAL)) ] && [ x$(SONIC_CONFIG_USE_NATIVE_DOCKERD_FOR_BUILD) == x"y" ] && echo $(SONIC_IMAGE_VERSION) || echo latest)
@@ -522,6 +524,7 @@ endef
 ###############################################################################
 ## Local targets
 ###############################################################################
+$(info Eden - slave.mk: Local targets)
 
 # Copy debian packages from local directory
 # Add new package for copy:
@@ -552,6 +555,7 @@ SONIC_TARGET_LIST += $(addprefix $(FILES_PATH)/, $(SONIC_COPY_FILES))
 ###############################################################################
 ## Online targets
 ###############################################################################
+$(info Eden - slave.mk: Online targets)
 
 # Download debian packages from online location
 # Add new package for download:
@@ -594,6 +598,7 @@ SONIC_TARGET_LIST += $(addprefix $(FILES_PATH)/, $(SONIC_ONLINE_FILES))
 ###############################################################################
 ## Build targets
 ###############################################################################
+$(info Eden - slave.mk: Build targets)
 
 # Build project using build.sh script
 # They are essentially a one-time build projects that get sources from some URL
@@ -637,7 +642,7 @@ SONIC_TARGET_LIST += $(addprefix $(FILES_PATH)/, $(SONIC_MAKE_FILES))
 ###############################################################################
 ## Debian package related targets
 ###############################################################################
-
+$(info Eden - slave.mk: Debian package related targets)
 # Build project using build.sh script
 # They are essentially a one-time build projects that get sources from some URL
 # and compile them
@@ -792,6 +797,7 @@ endif
 ###############################################################################
 ## Python packages
 ###############################################################################
+$(info Eden - slave.mk: Python packages)
 
 # Build project with python setup.py --command-packages=stdeb.command
 # Add new package for build:
@@ -906,7 +912,7 @@ endif
 ###############################################################################
 ## Docker images related targets
 ###############################################################################
-
+$(info Eden - slave.mk: Docker images related targets)
 # start docker daemon
 docker-start :
 	$(Q)sudo sed -i 's/--storage-driver=vfs/--storage-driver=$(SONIC_SLAVE_DOCKER_DRIVER)/' /etc/default/docker
@@ -1154,7 +1160,7 @@ $(DOCKER_LOAD_TARGETS) : $(TARGET_PATH)/%.gz-load : .platform docker-start $$(TA
 ###############################################################################
 ## Installers
 ###############################################################################
-
+$(info Eden - slave.mk: Installers)
 # targets for building installers with base image
 $(addprefix $(TARGET_PATH)/, $(SONIC_INSTALLERS_BASE)) : $(TARGET_PATH)/% : \
         .platform \
@@ -1435,7 +1441,7 @@ $(addprefix $(TARGET_PATH)/, $(SONIC_INSTALLERS_BASE)) : $(TARGET_PATH)/% : \
 	$(FOOTER)
 
 SONIC_TARGET_LIST += $(addprefix $(TARGET_PATH)/, $(SONIC_INSTALLERS_BASE))
-
+$(info Eden - slave.mk: Installers2)
 # targets for building installers with base image
 $(addprefix $(TARGET_PATH)/, $(SONIC_INSTALLERS)) : $(TARGET_PATH)/% : \
         .platform \
